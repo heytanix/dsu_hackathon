@@ -1,34 +1,110 @@
-# dsu_hackathon
+# Real-Time Multi-Object Tracking System with GUI
+Overview
+This project integrates a real-time multi-object tracking system using YOLOv5 with a Tkinter GUI. It captures live video from the webcam, performs object detection and tracking, and displays the results along with logs in a graphical interface.
 
-# Approach for Multi-Object Tracking in Dense Traffic
-To effectively implement multi-object tracking (MOT) in dense traffic scenarios, follow this structured approach:
-# 1. Problem Definition
-Identify the specific challenges in tracking multiple objects in high-density traffic, such as occlusions, overlapping vehicles, and rapid movement.
-# 2. Select a Tracking Algorithm
-Choose a suitable MOT algorithm. For this scenario, consider using SORT (Simple Online and Realtime Tracking) due to its balance between simplicity and real-time performance.
-# 3. Integrate Object Detection
-Use a robust object detection model (e.g., YOLO, SSD, Faster R-CNN) to generate bounding boxes for detected objects in each frame.
-Ensure the detection model is optimized for speed and accuracy to handle the dynamic nature of traffic.
-# 4. Implement SORT Algorithm
-Kalman Filter: Utilize a Kalman filter for predicting the future positions of detected objects based on their current states.
-Data Association: Implement the Hungarian algorithm for associating detected bounding boxes with existing tracks to maintain object identities across frames.
-# 5. Handle Occlusions and ID Management
-Develop strategies to manage occlusions effectively:
-Use appearance features (if applicable) to assist in re-identifying objects after occlusions.
-Implement a mechanism for temporarily holding tracks during occlusions instead of deleting them immediately.
-# 6. Optimize Performance
-Focus on optimizing both the detection and tracking processes:
-Reduce the computational load by resizing input frames or processing at lower frame rates if necessary.
-Consider using GPU acceleration for both detection and tracking tasks.
-# 7. Test and Validate
-Evaluate the system using real-world traffic video data:
-Measure performance metrics such as precision, recall, and ID switch rates.
-Adjust parameters based on testing results to improve tracking accuracy.
-# 8. Visualization and Analysis
-Implement visualization tools to display tracked objects with their IDs on video feeds for easier analysis.
-Analyze tracking performance over time to identify areas for improvement.
-# 9. Iterate and Improve
-Continuously refine the model based on feedback from testing:
-Update the object detection model as needed.
-Experiment with different tracking algorithms or enhancements to SORT if necessary.
-By following this structured approach, you can develop an effective multi-object tracking system tailored for dense traffic environments, ensuring accurate tracking of multiple vehicles in real time.
+## Key Features
+Start and Stop Buttons: Control the tracking process.
+Live Video Display: Shows real-time video with bounding boxes around detected objects.
+Logging Section: Provides real-time logs of detected objects and their appearance times.
+Dependencies
+Ensure you have the following Python libraries installed:
+
+pip install torch torchvision opencv-python pillow tkinter
+Code Explanation
+
+## Imports and Setup
+import tkinter as tk
+from tkinter import ttk
+from PIL import Image, ImageTk
+import cv2
+import threading
+import torch
+import time
+Tkinter: Provides GUI components.
+Pillow (PIL): Handles image conversion for display in Tkinter.
+OpenCV: Captures video from the webcam and processes frames.
+PyTorch: Loads and runs the YOLOv5 model.
+Threading: Allows video processing to run concurrently with the GUI.
+
+## Load YOLOv5 Model
+model = torch.hub.load('ultralytics/yolov5', 'yolov5m')
+YOLOv5m: Medium-sized YOLOv5 model for balanced performance and speed.
+
+## GUI Class Definition
+class TrackingApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Real-Time Multi-Object Tracking")
+        self.root.geometry("900x700")
+        ...
+TrackingApp class: Defines the main GUI and functionality.
+Window Setup: Sets title and size.
+Video Source: Captures video from the default webcam.
+
+## GUI Components
+self.video_frame = ttk.Label(root)
+self.video_frame.pack(pady=20)
+
+self.start_button = ttk.Button(root, text="Start Tracking", command=self.start_tracking)
+self.start_button.pack(side=tk.LEFT, padx=20)
+
+self.stop_button = ttk.Button(root, text="Stop Tracking", command=self.stop_tracking)
+self.stop_button.pack(side=tk.RIGHT, padx=20)
+
+self.log_text = tk.Text(root, height=10, width=100)
+self.log_text.pack(pady=10)
+video_frame: Displays the live video feed.
+start_button and stop_button: Control the tracking process.
+log_text: Logs detected objects and their IDs.
+
+## Start and Stop Functions
+def start_tracking(self):
+    if not self.is_running:
+        self.is_running = True
+        self.thread = threading.Thread(target=self.process_video)
+        self.thread.start()
+
+def stop_tracking(self):
+    self.is_running = False
+    self.cap.release()
+    cv2.destroyAllWindows()
+start_tracking: Initiates a separate thread for video processing.
+stop_tracking: Stops the tracking process and releases resources.
+
+## Video Processing and Detection
+def process_video(self):
+    while self.is_running:
+        ret, frame = self.cap.read()
+        if not ret:
+            break
+        
+        results = model(frame)  # Object detection using YOLOv5
+        detections = results.xyxy[0].cpu().numpy()
+        ...
+        
+        # Convert and display the frame
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(frame)
+        img_tk = ImageTk.PhotoImage(image=img)
+        self.video_frame.img_tk = img_tk
+        self.video_frame.config(image=img_tk)
+        self.root.update_idletasks()
+Frame Capture: Reads frames from the webcam.
+Object Detection: Runs YOLOv5 on each frame and retrieves detection results.
+Frame Display: Converts the frame to RGB and displays it in the GUI.
+
+## Logging Mechanism
+def log_data(self, message):
+    self.log_text.insert(tk.END, message + '\n')
+    self.log_text.see(tk.END)
+Logs detected objects and their IDs in the Text widget.
+Customization Options
+Class Labels: Modify the class_labels dictionary to track different object classes.
+Confidence Threshold: Adjust the conf > 0.4 threshold for detection sensitivity.
+Video Source: Change self.cap = cv2.VideoCapture(0) to use a different video source or file.
+Running the Application
+Ensure your webcam is connected.
+
+## Run the script:
+python tracking_app.py
+Use the Start and Stop buttons to control tracking.
