@@ -18,36 +18,8 @@
         <h1 class="text-3xl font-bold text-center mb-6">Video Object Tracking</h1>
         
         <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
-            <form action="/" method="post" enctype="multipart/form-data" class="mb-6">
-                <div class="flex items-center space-x-4">
-                    <input 
-                        type="file" 
-                        name="image" 
-                        accept="video/*,image/*" 
-                        capture="user" 
-                        class="block w-full text-sm text-gray-500 
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-                    />
-                    <input 
-                        type="submit" 
-                        value="Upload" 
-                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                </div>
-            </form>
-
-            {% if filename %}
-            <div class="mt-4 text-green-600">
-                Uploaded file: {{ filename }}
-            </div>
-            {% endif %}
-            
             <div class="mb-4">
-                <img id="video-feed" src="" alt="Video Feed">
+                <video id="video-feed" autoplay playsinline></video>
             </div>
             
             <div id="track-info" class="mt-4">
@@ -68,7 +40,24 @@
         const fpsDisplay = document.getElementById('fps-display');
         const objectsList = document.getElementById('objects-list');
 
-        // Listen for video frames
+        // Access user's webcam
+        navigator.mediaDevices.getUser Media({ video: true })
+            .then(stream => {
+                videoFeed.srcObject = stream;
+
+                // Send video frames to the server
+                const mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = function(event) {
+                    // Send the video frame to the server
+                    socket.emit('video_frame', { frame: URL.createObjectURL(event.data) });
+                };
+                mediaRecorder.start(100); // Send frames every 100ms
+            })
+            .catch(error => {
+                console.error('Error accessing webcam:', error);
+            });
+
+        // Listen for video frames from the server
         socket.on('video_frame', function(data) {
             // Update video feed
             videoFeed.src = data.frame;
