@@ -1,110 +1,126 @@
-# Real-Time Multi-Object Tracking System with GUI
-Overview
-This project integrates a real-time multi-object tracking system using YOLOv5 with a Tkinter GUI. It captures live video from the webcam, performs object detection and tracking, and displays the results along with logs in a graphical interface.
+# Real-Time Multi-Object Tracking using YOLOv5 and SORT with GUI
+
+## Overview
+This Python project demonstrates real-time multi-object tracking using YOLOv5 for object detection and the Simple Online and Realtime Tracking (SORT) algorithm. It also integrates a graphical user interface (GUI) built with Tkinter to display live video feed, detected objects, and real-time tracking logs.
 
 ## Key Features
-Start and Stop Buttons: Control the tracking process.
-Live Video Display: Shows real-time video with bounding boxes around detected objects.
-Logging Section: Provides real-time logs of detected objects and their appearance times.
-Dependencies
-Ensure you have the following Python libraries installed:
+1. **Object Detection with YOLOv5m**: Utilizes the medium version of YOLOv5 for better accuracy in detecting objects.
+2. **Object Tracking with SORT**: Tracks detected objects across frames using a simplified Kalman filter-based tracker.
+3. **GUI Integration**: Displays live video feed and logs detected object data in a user-friendly interface.
+4. **Custom COCO Class Mapping**: Tracks specific object types like cars, motorbikes, buses, trucks, bicycles, and people.
+5. **Data Logging**: Logs object IDs, types, durations, and timestamps to a file and displays them in the GUI.
 
-pip install torch torchvision opencv-python pillow tkinter
-Code Explanation
+---
 
-## Imports and Setup
-import tkinter as tk
-from tkinter import ttk
-from PIL import Image, ImageTk
-import cv2
-import threading
-import torch
-import time
-Tkinter: Provides GUI components.
-Pillow (PIL): Handles image conversion for display in Tkinter.
-OpenCV: Captures video from the webcam and processes frames.
-PyTorch: Loads and runs the YOLOv5 model.
-Threading: Allows video processing to run concurrently with the GUI.
+## Installation
+To run this project, ensure the following Python libraries are installed:
 
-## Load YOLOv5 Model
-model = torch.hub.load('ultralytics/yolov5', 'yolov5m')
-YOLOv5m: Medium-sized YOLOv5 model for balanced performance and speed.
+```bash
+pip install opencv-python torch pandas requests Pillow filterpy
+```
 
-## GUI Class Definition
-class TrackingApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Real-Time Multi-Object Tracking")
-        self.root.geometry("900x700")
-        ...
-TrackingApp class: Defines the main GUI and functionality.
-Window Setup: Sets title and size.
-Video Source: Captures video from the default webcam.
+---
+
+## Code Breakdown
+
+### 1. Object Detection and Tracking
+The core functionality includes:
+
+- **YOLOv5 Model Loading**:
+  ```python
+  model = torch.hub.load('ultralytics/yolov5', 'yolov5m')
+  ```
+
+- **SORT Algorithm**:
+  A simple implementation of the SORT tracker, utilizing a Kalman filter for predicting object positions.
+
+- **Object Tracking**:
+  Objects are tracked across frames using their IDs. New objects are logged with appearance timestamps, and objects leaving the frame are logged with their durations.
+
+### 2. Real-Time Tracking GUI
+The GUI is built using Tkinter and provides the following:
+
+- **Start/Stop Buttons**:
+  Controls for initiating and terminating object tracking.
+
+- **Video Display**:
+  Displays the live video feed with bounding boxes and labels for detected objects.
+
+- **Log Text Area**:
+  Shows real-time logs of detected object data.
+
+---
+
+## Usage
+
+1. **Run the Script**:
+   ```bash
+   python tracking_script.py
+   ```
+
+2. **Start Tracking**:
+   Click the "Start Tracking" button in the GUI to begin object detection and tracking.
+
+3. **View Logs**:
+   Logs will appear in the text area of the GUI and in the `tracking_log.txt` file.
+
+4. **Stop Tracking**:
+   Click the "Stop Tracking" button to terminate the tracking process.
+
+---
 
 ## GUI Components
-self.video_frame = ttk.Label(root)
-self.video_frame.pack(pady=20)
 
-self.start_button = ttk.Button(root, text="Start Tracking", command=self.start_tracking)
-self.start_button.pack(side=tk.LEFT, padx=20)
+### Video Feed
+Displays the real-time video feed from the webcam with bounding boxes and labels for detected objects.
 
-self.stop_button = ttk.Button(root, text="Stop Tracking", command=self.stop_tracking)
-self.stop_button.pack(side=tk.RIGHT, padx=20)
+### Controls
+- **Start Tracking**: Initiates the detection and tracking process.
+- **Stop Tracking**: Ends the detection and tracking process.
 
-self.log_text = tk.Text(root, height=10, width=100)
-self.log_text.pack(pady=10)
-video_frame: Displays the live video feed.
-start_button and stop_button: Control the tracking process.
-log_text: Logs detected objects and their IDs.
+### Log Area
+Logs details of detected objects, including:
+- **ID**: Unique identifier for the object.
+- **Type**: Object label (e.g., Car, Person).
+- **Duration**: Time the object was in the frame.
+- **Timestamps**: First and last seen times.
 
-## Start and Stop Functions
-def start_tracking(self):
-    if not self.is_running:
-        self.is_running = True
-        self.thread = threading.Thread(target=self.process_video)
-        self.thread.start()
+---
 
-def stop_tracking(self):
-    self.is_running = False
-    self.cap.release()
-    cv2.destroyAllWindows()
-start_tracking: Initiates a separate thread for video processing.
-stop_tracking: Stops the tracking process and releases resources.
+## Future Improvements
+- **Enhance Tracker Logic**: Replace simplistic ID generation with a more robust tracking mechanism.
+- **Custom Class Training**: Train YOLOv5 on custom datasets for specific use cases.
+- **Export Logs**: Add functionality to export logs in CSV or JSON format.
+- **Performance Optimization**: Improve real-time processing efficiency for higher resolution video feeds.
 
-## Video Processing and Detection
-def process_video(self):
-    while self.is_running:
-        ret, frame = self.cap.read()
-        if not ret:
-            break
-        
-        results = model(frame)  # Object detection using YOLOv5
-        detections = results.xyxy[0].cpu().numpy()
-        ...
-        
-        # Convert and display the frame
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(frame)
-        img_tk = ImageTk.PhotoImage(image=img)
-        self.video_frame.img_tk = img_tk
-        self.video_frame.config(image=img_tk)
-        self.root.update_idletasks()
-Frame Capture: Reads frames from the webcam.
-Object Detection: Runs YOLOv5 on each frame and retrieves detection results.
-Frame Display: Converts the frame to RGB and displays it in the GUI.
+---
 
-## Logging Mechanism
-def log_data(self, message):
-    self.log_text.insert(tk.END, message + '\n')
-    self.log_text.see(tk.END)
-Logs detected objects and their IDs in the Text widget.
-Customization Options
-Class Labels: Modify the class_labels dictionary to track different object classes.
-Confidence Threshold: Adjust the conf > 0.4 threshold for detection sensitivity.
-Video Source: Change self.cap = cv2.VideoCapture(0) to use a different video source or file.
-Running the Application
-Ensure your webcam is connected.
+## Sample Output
 
-## Run the script:
-python tracking_app.py
-Use the Start and Stop buttons to control tracking.
+### Logs
+Logs are saved in `tracking_log.txt` with the following format:
+```
+ID: 1234, Type: Car, Duration: 5.67 seconds, First seen: 2024-12-04 15:34:21, Last seen: 2024-12-04 15:34:26
+```
+
+### GUI
+The GUI displays:
+1. Video feed with bounding boxes and labels.
+2. Logs in the text area below the video feed.
+
+---
+
+## Requirements
+- **Hardware**: A webcam and a system with reasonable processing power (preferably with a GPU).
+- **Software**: Python 3.7+, OpenCV, PyTorch, and Tkinter.
+
+---
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for more details.
+
+---
+
+## Acknowledgments
+- **Ultralytics** for YOLOv5.
+- **SORT Algorithm** by Alex Bewley.
